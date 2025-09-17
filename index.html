@@ -1,0 +1,78 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+  <title>BloodLife</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    .container { max-width: 600px; margin: auto; }
+    input, select, button { margin: 5px 0; padding: 10px; width: 100%; }
+    .donor { border: 1px solid #ccc; padding: 10px; margin: 5px 0; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>BloodLife</h1>
+
+    <h2>Register as Donor</h2>
+    <input id="name" placeholder="Name">
+    <input id="bloodGroup" placeholder="Blood Group (e.g. A+)">
+    <input id="location" placeholder="Location">
+    <input id="contact" placeholder="Contact">
+    <button onclick="registerDonor()">Register</button>
+
+    <h2>Search Donors</h2>
+    <input id="searchBloodGroup" placeholder="Blood Group">
+    <input id="searchLocation" placeholder="Location">
+    <button onclick="searchDonors()">Search</button>
+
+    <div id="results"></div>
+  </div>
+
+  <script>
+    const API_URL = "http://localhost:5000";
+
+    async function registerDonor() {
+      const donor = {
+        name: document.getElementById("name").value,
+        bloodGroup: document.getElementById("bloodGroup").value,
+        location: document.getElementById("location").value,
+        contact: document.getElementById("contact").value
+      };
+      await fetch(API_URL + "/donors", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(donor)
+      });
+      alert("Donor registered!");
+    }
+
+    async function searchDonors() {
+      const bloodGroup = document.getElementById("searchBloodGroup").value;
+      const location = document.getElementById("searchLocation").value;
+      const res = await fetch(`${API_URL}/donors?bloodGroup=${bloodGroup}&location=${location}`);
+      const donors = await res.json();
+      const resultsDiv = document.getElementById("results");
+      resultsDiv.innerHTML = "";
+      donors.forEach(d => {
+        const div = document.createElement("div");
+        div.className = "donor";
+        div.innerHTML = `<b>${d.name}</b> (${d.bloodGroup}) - ${d.location} <br>Contact: ${d.contact} 
+                         <button onclick="requestBlood(${d.id})">Request Blood</button>`;
+        resultsDiv.appendChild(div);
+      });
+    }
+
+    async function requestBlood(donorId) {
+      const recipientName = prompt("Enter your name to send request:");
+      if (!recipientName) return;
+      await fetch(API_URL + "/request", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ donorId, recipientName })
+      });
+      alert("Request sent!");
+    }
+  </script>
+</body>
+</html>
